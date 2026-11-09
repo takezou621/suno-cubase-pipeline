@@ -120,10 +120,11 @@ src/suno_cubase/
 ├── cli.py           コマンド定義 (suno2cubase)
 ├── separation.py    demucs CLI ラッパ
 ├── analysis.py      BPM・レベル統計
-├── aaf_builder.py   AAF 生成 (pyaaf2)
+├── aaf_builder.py   AAF 生成 (pyaaf2) + 生成後の内部検証
 ├── project.py       出力構成・パイプライン
 └── report.py        report.md 生成
 skills/suno-cubase/  Claude Code / Codex 用 Skill
+scripts/             cubase_import_aaf.py (実験的: GUI自動化での取り込み補助)
 tests/               合成音による単体テスト
 ```
 

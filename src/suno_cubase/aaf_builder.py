@@ -26,6 +26,58 @@ from . import STEM_ORDER
 SUPPORTED_SUBTYPES = ("PCM_16", "PCM_24")
 
 
+def verify_aaf(path: str | Path, expected_rate: int | None = None) -> dict:
+    """生成後のAAF内部整合性を検査する。
+
+    CompositionMob(TopLevel) / トラックスロット / PCMDescriptor /
+    埋め込みEssenceDataの長さを確認する。壊れたAAFをCubaseに渡さないためのゲート。
+    """
+    with aaf2.open(str(path)) as f:
+        mobs = list(f.content.mobs)
+        comps = [m for m in mobs if type(m).__name__ == "CompositionMob"
+                 and str(m.usage) == "Usage_TopLevel"]
+        if len(comps) != 1:
+            raise ValueError(f"TopLevel CompositionMob が1つではありません: {len(comps)}")
+        comp = comps[0]
+
+        essence_map = {ed.mob_id: ed for ed in f.content.essencedata}
+        tracks = []
+        for slot in comp.slots:
+            if str(slot.media_kind).lower() != "sound":
+                raise ValueError(f"slot {slot.name} の media_kind が sound ではありません")
+            clip = slot.segment
+            # CompositionMob slot → MasterMob → (masterのslot) → SourceMob
+            master = clip.mob
+            src_clip = master.slot_at(clip.slot_id).segment
+            src_mob = src_clip.mob
+            d = src_mob.descriptor
+            sr = int(d["SampleRate"].value)
+            ch = int(d["Channels"].value)
+            bits = int(d["QuantizationBits"].value)
+            frames = int(d.length)
+            if expected_rate is not None and sr != expected_rate:
+                raise ValueError(f"slot {slot.name}: SR不一致 {sr} != {expected_rate}")
+            if bits not in (16, 24):
+                raise ValueError(f"slot {slot.name}: bits={bits} は未対応")
+            ed = essence_map.get(src_mob.mob_id)
+            if ed is None:
+                raise ValueError(f"slot {slot.name}: EssenceData が埋め込まれていません")
+            block_align = ch * (bits // 8)
+            stream = ed.open("r")
+            stream.seek(0, 2)
+            size = stream.tell()
+            stream.close()
+            if size != frames * block_align:
+                raise ValueError(
+                    f"slot {slot.name}: EssenceData長不一致 {size} != {frames}x{block_align}")
+            tracks.append({"name": slot.name, "sample_rate": sr,
+                           "channels": ch, "bits": bits,
+                           "duration_sec": round(frames / sr, 3)})
+        if not tracks:
+            raise ValueError("sound slot がありません")
+    return {"tracks": tracks}
+
+
 def _to_pcm_wav(src: Path, dst: Path, subtype: str = "PCM_24") -> None:
     """任意のWAV/音声を AAF 埋め込み用の PCM WAV に変換する。"""
     data, sr = sf.read(str(src), dtype="int32", always_2d=True)
@@ -97,6 +149,9 @@ def build_aaf(stems: Mapping[str, Path],
                 ts.name = name
                 ts.segment = master.create_source_clip(slot_ids[name],
                                                        length=lengths[name])
+
+    # 書き込み直後に内部整合性を検査してから返す
+    verify_aaf(out_path, expected_rate=sample_rate)
 
     duration_sec = round(max(lengths.values()) / sample_rate, 3)
     return {
