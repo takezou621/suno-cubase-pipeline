@@ -81,3 +81,22 @@ def test_cli_build_aaf(tmp_path: Path) -> None:
     assert rc2 == 0
     data = json.loads((tmp_path / "a.json").read_text())
     assert "bpm" in data["source"]
+
+
+def test_cli_run_with_stems_dir(tmp_path: Path) -> None:
+    """分離をスキップして既存ステムから run できること (demucs 不要経路)。"""
+    d = tmp_path / "stems"
+    d.mkdir()
+    _click_track(d / "vocals.wav", sec=0.5)
+    _click_track(d / "bass.wav", sec=0.5)
+    rc = cli_main(["run", "dummy.wav", "--stems-dir", str(d),
+                   "-o", str(tmp_path / "out"), "--title", "テスト曲"])
+    assert rc == 0
+    proj = tmp_path / "out" / "テスト曲"
+    assert (proj / "cubase" / "テスト曲.aaf").is_file()
+    analysis = json.loads((proj / "analysis.json").read_text())
+    assert analysis["source"] is None          # 入力音源が無い経路
+    assert analysis["model"] == "external"
+    assert set(analysis["stems"]) == {"bass", "vocals"}
+    report = (proj / "report.md").read_text(encoding="utf-8")
+    assert "AAF" in report

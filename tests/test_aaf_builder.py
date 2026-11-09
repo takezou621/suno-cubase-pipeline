@@ -74,6 +74,20 @@ def test_build_aaf_48k(stems_dir: Path, tmp_path: Path) -> None:
     assert info["tracks"] == ["vocals", "drums"]
 
 
+def test_build_aaf_pcm16(stems_dir: Path, tmp_path: Path) -> None:
+    d = tmp_path / "s16"
+    d.mkdir()
+    _make_wav(d / "vocals.wav")
+    info = build_aaf({"vocals": d / "vocals.wav"}, tmp_path / "o16.aaf",
+                     subtype="PCM_16")
+    assert info["sample_rate"] == SR
+    # build_aaf 内で verify_aaf が走る。bits=16 で読み戻せることを明示確認
+    from suno_cubase.aaf_builder import verify_aaf
+    r = verify_aaf(tmp_path / "o16.aaf", expected_rate=SR)
+    assert r["tracks"] == [{"name": "vocals", "sample_rate": SR,
+                            "channels": 2, "bits": 16, "duration_sec": 1.0}]
+
+
 def test_build_aaf_rejects_mixed_rates(stems_dir: Path, tmp_path: Path) -> None:
     d = tmp_path / "mixed"
     d.mkdir()
