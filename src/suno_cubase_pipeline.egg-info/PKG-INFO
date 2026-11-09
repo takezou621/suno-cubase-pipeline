@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: suno-cubase-pipeline
+Version: 0.1.0
+Summary: Suno音源を6ステムに分離し、Cubase用のAAFプロジェクトを生成するCLI
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pyaaf2>=1.7
+Requires-Dist: soundfile>=0.12
+Requires-Dist: numpy>=1.24
+Provides-Extra: separate
+Requires-Dist: demucs>=4.0.1; extra == "separate"
+Requires-Dist: librosa>=0.10; extra == "separate"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

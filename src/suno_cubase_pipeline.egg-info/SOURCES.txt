@@ -1,0 +1,16 @@
+pyproject.toml
+src/suno_cubase/__init__.py
+src/suno_cubase/aaf_builder.py
+src/suno_cubase/analysis.py
+src/suno_cubase/cli.py
+src/suno_cubase/project.py
+src/suno_cubase/report.py
+src/suno_cubase/separation.py
+src/suno_cubase_pipeline.egg-info/PKG-INFO
+src/suno_cubase_pipeline.egg-info/SOURCES.txt
+src/suno_cubase_pipeline.egg-info/dependency_links.txt
+src/suno_cubase_pipeline.egg-info/entry_points.txt
+src/suno_cubase_pipeline.egg-info/requires.txt
+src/suno_cubase_pipeline.egg-info/top_level.txt
+tests/test_aaf_builder.py
+tests/test_pipeline.py
