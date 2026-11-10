@@ -58,13 +58,16 @@ def render_report(result: dict) -> str:
     lines.append("")
     lines.append("> AAF には音声が埋め込まれている。元の stems/ フォルダはバックアップ用。")
     lines.append("")
-    lines.append("## 既知の問題 (2026-11 検証)")
+    lines.append("## Cubase 15/16 での読み込みについて (2026-11 検証)")
     lines.append("")
-    lines.append("- **Cubase 15/16 は本ツール生成の AAF を読み込むとクラッシュします**"
-                 " (AAFfilter での SIGSEGV。pyaaf2 issue #103 と同根の構造非互換)")
-    lines.append("- 回避策: Cubase の空プロジェクトに `stems/` フォルダの WAV を"
-                 "「ファイル > 読み込み > オーディオファイル…」で直接読み込んでください"
-                 " (トラック構成は同様に得られます)")
+    lines.append("- v0.1.0 の構成では AAF 読み込み時に Cubase がクラッシュしましたが、"
+                 "v0.2.0 から DaVinci Resolve 書き出しと同等の構成になり、"
+                 "クラッシュせずトラック構成を読み込めます (Cubase 15 / 16.0.5 で確認)")
+    lines.append("- ただし Cubase 16.0.5 の AAF インポーターは埋め込みメディアの解決に"
+                 "不具合があり、クリップは未配置のまま残ります"
+                 " (DaVinci Resolve 製 AAF でも同様のため Steinberg 側の問題)")
+    lines.append("- 確実に音源まで入れる方法: Cubase の空プロジェクトに `stems/` フォルダの"
+                 " WAV を「ファイル > 読み込み > オーディオファイル…」で直接読み込む")
     lines.append("- 詳細と自動化手順は skills/suno-cubase/references/cubase-import.md 参照")
     lines.append("")
     lines.append("## 注意")

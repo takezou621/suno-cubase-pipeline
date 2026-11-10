@@ -51,17 +51,45 @@ def test_build_aaf_structure(stems_dir: Path, tmp_path: Path) -> None:
         assert len(comps) == 1 and len(masters) == 1
         assert len(sources) == 6
         assert str(comps[0].usage) == "Usage_TopLevel"
-        assert str(masters[0].usage) == "Usage_LowerLevel"
 
-        assert len(comps[0].slots) == 6
-        names = [s.name for s in comps[0].slots]
+        # Timecode slot (slot 1) + sound slots (slot 2..)
+        assert len(comps[0].slots) == 7
+        assert str(comps[0].slots[0].media_kind).lower() == "timecode"
+        names = [s.name for s in comps[0].slots if s.name]
         assert names == info["tracks"]
 
         for slot in comps[0].slots:
+            if str(slot.media_kind).lower() == "timecode":
+                continue
             assert slot.media_kind.lower() == "sound"
             assert int(slot.edit_rate) == SR
-        # 埋め込み EssenceData がステム数分ある
-        assert len(list(f.content.essencedata)) == 6
+        # 埋め込み EssenceData がステム数分ある (WAV 形式)
+        eds = list(f.content.essencedata)
+        assert len(eds) == 6
+        for ed in eds:
+            st = ed.open("r")
+            head = bytes(st.read(12))
+            st.close()
+            assert head[:4] == b"RIFF" and head[8:12] == b"WAVE"
+
+
+def test_build_aaf_structure_wavedescriptor(stems_dir: Path, tmp_path: Path) -> None:
+    """Descriptor が WAVEDescriptor (Summary=RIFF fmt) であること。"""
+    out = tmp_path / "wd.aaf"
+    build_aaf(_load_stems(stems_dir), out, title="wd")
+    with aaf2.open(str(out)) as f:
+        descs = []
+        for mob in f.content.mobs:
+            d = getattr(mob, "descriptor", None)
+            if d is not None:
+                descs.append(d)
+        assert descs and all(type(d).__name__ == "WAVEDescriptor" for d in descs)
+        for d in descs:
+            summary = bytes(d["Summary"].value)
+            assert summary[:4] == b"RIFF" and summary[8:12] == b"WAVE"
+            channels = int.from_bytes(summary[22:24], "little")
+            bits = int.from_bytes(summary[34:36], "little")
+            assert (channels, bits) == (2, 24)
 
 
 def test_build_aaf_48k(stems_dir: Path, tmp_path: Path) -> None:

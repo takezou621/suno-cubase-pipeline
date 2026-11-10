@@ -69,9 +69,9 @@ def test_cli_run_existing_project_exit_code(tmp_path: Path) -> None:
     assert cli_main(base) == 0
     assert cli_main(base) == 4                  # 既存 → exit 4
     assert cli_main(base + ["--force"]) == 0    # --force で上書き
-    # report.md に既知問題の注記が入っている
+    # report.md に Cubase 15/16 の読み込みに関する注記が入っている
     report = (out / "QA" / "report.md").read_text(encoding="utf-8")
-    assert "既知の問題" in report and "クラッシュ" in report
+    assert "Cubase 15/16" in report and "直接読み込む" in report
 
 
 def test_analyze_source_stats(tmp_path: Path) -> None:

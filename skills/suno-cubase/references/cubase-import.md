@@ -21,27 +21,32 @@ Cubase の AAF 読み込みに対応する版（Pro / Artist。実機検証は C
    - 「ファイル > 保存」で `.cpr` として保存。以降は通常の Cubase プロジェクトとして
      編集（クオンタイズ、打ち込み、ミックス）できる。
 
-## 既知の問題: Cubase 15/16 で pyaaf2 製 AAF がクラッシュする (2026-11 検証)
+## Cubase 15/16 での読み込みステータス (2026-11-10 検証)
 
-Cubase 16 Pro (16.0.5.174) と Cubase 15 の両方で、本ツールが生成した
-pyaaf2 製 AAF（埋め込み essence / リンク essence どちらも、PCM_16 / PCM_24、
-44.1k / 48k すべて）の読み込み時に `AAFfilter` が SIGSEGV でクラッシュする。
-同じ環境で DaVinci Resolve 書き出しの AAF は正常に読めるため、
-Cubase 側の AAF インポーターと pyaaf2 が生成する構造の非互換
-（[pyaaf2 issue #103](https://github.com/markreidvfx/pyaaf2/issues/103) と同根）。
+- **v0.1.0 (pyaaf2 既定構造)**: 埋め込み/リンク essence、PCM_16/24、44.1/48k の
+  全組み合わせで `AAFfilter` が SIGSEGV クラッシュ
+  （[pyaaf2 issue #103](https://github.com/markreidvfx/pyaaf2/issues/103) と同根）。
+- **v0.2.0 (DaVinci Resolve 準拠構造)**: Timecode slot / PhysicalTrackNumber /
+  WAVEDescriptor (Summary=RIFF fmt) / WAV形式埋め込み essence / OperationalPattern 削除。
+  **Cubase 16 Pro 16.0.5 と Cubase 15 の両方でクラッシュせず、6 トラックが
+  正しい名前・順序で生成されることを確認**。
+- **残存課題**: Cubase 16.0.5 のインポーターは埋め込みメディアの解決に不具合があり、
+  クリップが未配置のまま終わる（「unresolved media reference」警告）。
+  **DaVinci Resolve 書き出しの AAF でも同一の結果**のため Steinberg 側の問題
+  （バージョンアップでの改善を注視）。
+- **メディア実体を確実に入れる方法**: 空プロジェクトにステムWAVを
+  「ファイル > 読み込み > オーディオファイル…」で直接読み込んで .cpr 保存する
+  （実証済み。6 トラック構成は同様に得られる）。
 
-**回避策（実証済み）**: AAF を使わず、空プロジェクトにステムWAVを
-「ファイル > 読み込み > オーディオファイル…」で直接読み込んで .cpr 保存する。
-6 トラック構成は同様に得られる。GUI 自動化する場合は:
+### GUI 自動化する場合
 
 - メニュー操作は AX (`menu_press`) で確実に実行できる
 - 読み込みパネルのファイル行は AX で `AXTextField` として露出するので、
   行の `AXPosition` から座標クリックし、「開く」ボタンは `AXPress` で押せる
+- パネルの検索フィールドは `AXValue` 直接設定 + `AXConfirm` で目的フォルダを絞り込める
 - 保存ダイアログのファイル名フィールドは `AXValue` 直接設定で書ける
 - キーボードイベント（Cmd+Shift+G 等）と修飾キー付きクリックは
   Cubase のパネルに届かないことがあるため、マウス単体の操作で完結させる
-
-根本解決は Cubase 側の修正か、市販 DAW 互換の AAF 構造への追込が必要。
 
 ## よくある質問
 

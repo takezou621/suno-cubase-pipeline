@@ -22,12 +22,15 @@ Cubase 13 以降のプロジェクトファイル (.cpr) は独自バイナリ�
 - 読み込み後「保存」すれば、**Cubase 自身が作った完全な .cpr** になります
 - AAF は Cubase Pro / Artist の AAF 読み込み (Cubase 12 以降で対応) で開けます
 
-> [!WARNING]
-> **2026-11 検証: Cubase 15 / 16 では本ツール生成の AAF を読み込むと Cubase が
-> クラッシュします** (pyaaf2 issue #103 と同根の構造非互換。DaVinci Resolve 書き出しの
-> AAF は同一環境で正常に読めることを確認)。Cubase 14 以前での利用いただくか、
-> [回避策](skills/suno-cubase/references/cubase-import.md) (空プロジェクトへの
-> stems/ WAV 直接読み込み) を使用してください。根本修正は調査中です。
+> [!IMPORTANT]
+> **2026-11 検証結果**: v0.1.0 の構成では Cubase 15/16 の読み込みでクラッシュしていましたが、
+> v0.2.0 から DaVinci Resolve 書き出しと同等の構成 (Timecode slot + WAVEDescriptor +
+> PhysicalTrackNumber) に変更し、クラッシュせずトラック構成を読み込めることを
+> Cubase 15 / 16.0.5 の両方で確認しました。
+> ただし Cubase 16.0.5 の AAF インポーターは埋め込みメディアの解決に不具合があり、
+> クリップは未配置のまま残ります (DaVinci Resolve 製 AAF でも同様のため Steinberg 側の問題)。
+> 確実な方法は [回避策](skills/suno-cubase/references/cubase-import.md) (空プロジェクトへの
+> stems/ WAV 直接読み込み) です。
 
 Cubase での詳細な手順は [skills/suno-cubase/references/cubase-import.md](skills/suno-cubase/references/cubase-import.md) を参照してください。
 
