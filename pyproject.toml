@@ -1,6 +1,6 @@
 [project]
 name = "suno-cubase-pipeline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Suno音源を6ステムに分離し、Cubase用のAAFプロジェクトを生成するCLI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,7 +17,7 @@ separate = [
     "demucs>=4.0.1",
     "librosa>=0.10",
 ]
-dev = ["pytest"]
+dev = ["pytest", "pytest-cov"]
 
 [project.scripts]
 suno2cubase = "suno_cubase.cli:main"
@@ -28,3 +28,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

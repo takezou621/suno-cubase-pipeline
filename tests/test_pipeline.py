@@ -6,11 +6,12 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 import soundfile as sf
 
 from suno_cubase.analysis import analyze_source, analyze_stems
 from suno_cubase.cli import main as cli_main
-from suno_cubase.project import collect_stems, sanitize_title
+from suno_cubase.project import collect_stems, run_pipeline, sanitize_title
 
 
 def _click_track(path: Path, sr: int = 44100, bpm: float = 120.0, sec: float = 8.0) -> Path:
@@ -34,6 +35,43 @@ def _click_track(path: Path, sr: int = 44100, bpm: float = 120.0, sec: float = 8
 def test_sanitize_title() -> None:
     assert sanitize_title("My Song: demo v2 ") == "My_Song_demo_v2"
     assert sanitize_title("///") == "song"
+
+
+def test_sanitize_title_truncates_to_byte_limit() -> None:
+    long_name = "あ" * 300  # UTF-8 で 900 バイト
+    out = sanitize_title(long_name)
+    assert 0 < len(out.encode("utf-8")) <= 200
+    assert out.encode("utf-8").decode("utf-8") == out  # 文字境界で切れている
+
+
+def test_run_pipeline_rejects_existing_project(tmp_path: Path) -> None:
+    """既存プロジェクトがある場合は FileExistsError (--force で上書き)。"""
+    d = tmp_path / "stems"
+    d.mkdir()
+    _click_track(d / "vocals.wav", sec=0.5)
+    run_pipeline(tmp_path / "dummy.wav", tmp_path / "out",
+                 title="QA", stems_dir=d)
+    with pytest.raises(FileExistsError):
+        run_pipeline(tmp_path / "dummy.wav", tmp_path / "out",
+                     title="QA", stems_dir=d)
+    # --force 相当なら通る
+    run_pipeline(tmp_path / "dummy.wav", tmp_path / "out",
+                 title="QA", stems_dir=d, overwrite=True)
+
+
+def test_cli_run_existing_project_exit_code(tmp_path: Path) -> None:
+    d = tmp_path / "stems"
+    d.mkdir()
+    _click_track(d / "vocals.wav", sec=0.5)
+    out = tmp_path / "out"
+    base = ["run", "dummy.wav", "--stems-dir", str(d), "-o", str(out),
+            "--title", "QA"]
+    assert cli_main(base) == 0
+    assert cli_main(base) == 4                  # 既存 → exit 4
+    assert cli_main(base + ["--force"]) == 0    # --force で上書き
+    # report.md に既知問題の注記が入っている
+    report = (out / "QA" / "report.md").read_text(encoding="utf-8")
+    assert "既知の問題" in report and "クラッシュ" in report
 
 
 def test_analyze_source_stats(tmp_path: Path) -> None:

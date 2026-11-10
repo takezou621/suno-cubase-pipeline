@@ -13,12 +13,26 @@ from .aaf_builder import build_aaf
 from .separation import DEFAULT_MODEL, separate_stems
 
 
+# ファイル名1要素の上限 (APFS/ext4 の 255 バイト制限に対し、".aaf" 拡張子や
+# demucs が付けるサフィックスの余地を残した値)
+_MAX_NAME_BYTES = 200
+
+
+def _truncate_utf8(name: str, limit: int = _MAX_NAME_BYTES) -> str:
+    """UTF-8 バイト数で切り詰める (文字の途中で切らない)。"""
+    raw = name.encode("utf-8")
+    if len(raw) <= limit:
+        return name
+    return raw[:limit].decode("utf-8", errors="ignore")
+
+
 def sanitize_title(name: str, fallback: str = "song") -> str:
     """ファイル名・トラック名に使えるタイトルへ正規化する。"""
     name = unicodedata.normalize("NFC", name).strip()
     name = re.sub(r'[\\/:*?"<>|]+', "_", name)
     name = re.sub(r"\s+", "_", name)
     name = re.sub(r"_+", "_", name).strip("._")
+    name = _truncate_utf8(name)
     return name or fallback
 
 
@@ -43,10 +57,13 @@ def run_pipeline(audio_path: str | Path,
                  model: str = DEFAULT_MODEL,
                  device: str = "cpu",
                  segment: float | None = None,
-                 stems_dir: str | Path | None = None) -> dict:
+                 stems_dir: str | Path | None = None,
+                 overwrite: bool = False,
+                 subtype: str = "PCM_24") -> dict:
     """分離 → 解析 → AAF 生成 → レポートまでを実行する。
 
     stems_dir を指定すると分離をスキップし、そのWAV群をステムとして使う。
+    出力先に既にプロジェクトがある場合、overwrite=False なら FileExistsError。
 
     戻り値: 生成物のパスと解析結果をまとめた dict。
     """
@@ -56,6 +73,10 @@ def run_pipeline(audio_path: str | Path,
 
     name = sanitize_title(title or src.stem)
     project_dir = Path(out_root) / name
+    if project_dir.exists() and any(project_dir.iterdir()) and not overwrite:
+        raise FileExistsError(
+            f"出力先に既にプロジェクトがあります: {project_dir}\n"
+            f"上書きするには --force を付けて再実行してください")
     project_dir.mkdir(parents=True, exist_ok=True)
 
     # 1) 分離 (または既存ステムの取り込み)
@@ -78,7 +99,8 @@ def run_pipeline(audio_path: str | Path,
         json.dumps(analysis, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # 3) AAF 生成
-    aaf_info = build_aaf(stems, project_dir / "cubase" / f"{name}.aaf", title=name)
+    aaf_info = build_aaf(stems, project_dir / "cubase" / f"{name}.aaf",
+                         title=name, subtype=subtype)
 
     return {
         "project_dir": project_dir,

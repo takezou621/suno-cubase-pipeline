@@ -22,6 +22,13 @@ Cubase 13 以降のプロジェクトファイル (.cpr) は独自バイナリ�
 - 読み込み後「保存」すれば、**Cubase 自身が作った完全な .cpr** になります
 - AAF は Cubase Pro / Artist の AAF 読み込み (Cubase 12 以降で対応) で開けます
 
+> [!WARNING]
+> **2026-11 検証: Cubase 15 / 16 では本ツール生成の AAF を読み込むと Cubase が
+> クラッシュします** (pyaaf2 issue #103 と同根の構造非互換。DaVinci Resolve 書き出しの
+> AAF は同一環境で正常に読めることを確認)。Cubase 14 以前での利用いただくか、
+> [回避策](skills/suno-cubase/references/cubase-import.md) (空プロジェクトへの
+> stems/ WAV 直接読み込み) を使用してください。根本修正は調査中です。
+
 Cubase での詳細な手順は [skills/suno-cubase/references/cubase-import.md](skills/suno-cubase/references/cubase-import.md) を参照してください。
 
 ## 必要な環境
@@ -32,7 +39,7 @@ Cubase での詳細な手順は [skills/suno-cubase/references/cubase-import.md]
 | Python | 3.10〜3.12 ([uv](https://docs.astral.sh/uv/) での 3.12 venv 構築を推奨) |
 | demucs | v4 系 (`pip install demucs`)。初回実行時にモデル重み (~320MB) を自動取得 |
 | ffmpeg | PATH にあること (mp3/m4a 入力や demucs の内部処理で使用) |
-| Cubase | AAF 読み込みに対応する版 (Pro / Artist。実機検証は Cubase 16 Pro) |
+| Cubase | AAF 読み込みに対応する版 (Pro / Artist)。**注意: Cubase 15/16 では pyaaf2 製 AAF の読み込みでクラッシュすることが確認されています** (2026-11 検証。回避策は [skills/suno-cubase/references/cubase-import.md](skills/suno-cubase/references/cubase-import.md)) |
 
 分離エンジンは [Demucs v4 (htdemucs_6s)](https://github.com/facebookresearch/demucs) (MIT)、
 AAF 生成は [pyaaf2](https://github.com/markreidvfx/pyaaf2) (MIT) を使用しています。

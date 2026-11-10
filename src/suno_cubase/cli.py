@@ -31,6 +31,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         device=args.device,
         segment=args.segment,
         stems_dir=args.stems_dir,
+        overwrite=args.force,
+        subtype=args.subtype,
     )
     project_dir: Path = result["project_dir"]
     aaf = result["aaf"]
@@ -110,6 +112,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="demucs のセグメント長 (VRAM/メモリ不足時は小さく)")
     p.add_argument("--stems-dir", default=None,
                    help="既存ステムWAVフォルダを指定して分離をスキップ")
+    p.add_argument("--force", action="store_true",
+                   help="出力先に既にプロジェクトがある場合に上書きする")
+    p.add_argument("--subtype", default="PCM_24", choices=["PCM_16", "PCM_24"],
+                   help="埋め込み音声のビット深度 (既定: PCM_24)")
     _add_model_arg(p)
     p.set_defaults(func=cmd_run)
 
@@ -141,7 +147,10 @@ def main(argv: list[str] | None = None) -> int:
     except FileNotFoundError as e:
         print(f"エラー: {e}", file=sys.stderr)
         return 2
-    except RuntimeError as e:
+    except FileExistsError as e:
+        print(f"エラー: {e}", file=sys.stderr)
+        return 4
+    except (OSError, RuntimeError) as e:
         print(f"エラー: {e}", file=sys.stderr)
         return 3
 

@@ -58,6 +58,15 @@ def render_report(result: dict) -> str:
     lines.append("")
     lines.append("> AAF には音声が埋め込まれている。元の stems/ フォルダはバックアップ用。")
     lines.append("")
+    lines.append("## 既知の問題 (2026-11 検証)")
+    lines.append("")
+    lines.append("- **Cubase 15/16 は本ツール生成の AAF を読み込むとクラッシュします**"
+                 " (AAFfilter での SIGSEGV。pyaaf2 issue #103 と同根の構造非互換)")
+    lines.append("- 回避策: Cubase の空プロジェクトに `stems/` フォルダの WAV を"
+                 "「ファイル > 読み込み > オーディオファイル…」で直接読み込んでください"
+                 " (トラック構成は同様に得られます)")
+    lines.append("- 詳細と自動化手順は skills/suno-cubase/references/cubase-import.md 参照")
+    lines.append("")
     lines.append("## 注意")
     lines.append("")
     lines.append("- ステム分離は推定を含む。ボーカルとギター等の混在は完全には分かれない")
