@@ -21,6 +21,28 @@ Cubase の AAF 読み込みに対応する版（Pro / Artist。実機検証は C
    - 「ファイル > 保存」で `.cpr` として保存。以降は通常の Cubase プロジェクトとして
      編集（クオンタイズ、打ち込み、ミックス）できる。
 
+## 既知の問題: Cubase 15/16 で pyaaf2 製 AAF がクラッシュする (2026-11 検証)
+
+Cubase 16 Pro (16.0.5.174) と Cubase 15 の両方で、本ツールが生成した
+pyaaf2 製 AAF（埋め込み essence / リンク essence どちらも、PCM_16 / PCM_24、
+44.1k / 48k すべて）の読み込み時に `AAFfilter` が SIGSEGV でクラッシュする。
+同じ環境で DaVinci Resolve 書き出しの AAF は正常に読めるため、
+Cubase 側の AAF インポーターと pyaaf2 が生成する構造の非互換
+（[pyaaf2 issue #103](https://github.com/markreidvfx/pyaaf2/issues/103) と同根）。
+
+**回避策（実証済み）**: AAF を使わず、空プロジェクトにステムWAVを
+「ファイル > 読み込み > オーディオファイル…」で直接読み込んで .cpr 保存する。
+6 トラック構成は同様に得られる。GUI 自動化する場合は:
+
+- メニュー操作は AX (`menu_press`) で確実に実行できる
+- 読み込みパネルのファイル行は AX で `AXTextField` として露出するので、
+  行の `AXPosition` から座標クリックし、「開く」ボタンは `AXPress` で押せる
+- 保存ダイアログのファイル名フィールドは `AXValue` 直接設定で書ける
+- キーボードイベント（Cmd+Shift+G 等）と修飾キー付きクリックは
+  Cubase のパネルに届かないことがあるため、マウス単体の操作で完結させる
+
+根本解決は Cubase 側の修正か、市販 DAW 互換の AAF 構造への追込が必要。
+
 ## よくある質問
 
 | 状況 | 対処 |
